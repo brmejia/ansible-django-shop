@@ -5,12 +5,12 @@
   connection: local
 
   vars:
-    site_name: 'baseCMS'
+    site_name: 'hmt_cms'
     root: '{{ playbook_dir | dirname }}'
     venv: '{{ root }}/venv'
     dir: '{{ root }}/src'
     settings_file: "{{ dir }}/{{ site_name }}/settings.py"
-    apps_dir: '{{ dir }}/apps'
+    apps_dir: '{{ settings_file | dirname }}/apps'
     Apps:
       hmt_shop:
         repo:
@@ -20,7 +20,7 @@
         force_pull: no
 
   tasks:
-    - name: Crear directorios del proyecto
+    - name: Eliminar el directorio existente
       file: path={{ item }} state=absent
       with_items:
         - "{{ dir }}"
@@ -30,7 +30,6 @@
       with_items:
         - "{{ venv }}"
         - "{{ dir }}"
-        - "{{ apps_dir }}"
 
     # Suponemos que el virtualenv ya está creado
     - name: Copiando el wrapper para python en el virtualenv
@@ -48,6 +47,10 @@
     #   template: src=templates/djangocms_settings.py dest={{ dir }}/{{ site_name }}/settings.py mode=755
 
     - block:
+
+      - name: Crear directorio de apps
+        file: path={{ apps_dir }} state=directory
+
       # First, you have to add the ssh key to the repository service (e.g. github)
       - name: Haciendo pull del código de las aplicaciones
         git:
@@ -60,7 +63,7 @@
         with_dict: "{{ Apps }}"
 
       - name: Añadir aplicaciones al settings.py de Django
-        replace: backup=yes  dest={{ settings_file }}  regexp="INSTALLED_APPS = \(((.|\n)*?)'\n\)"  replace="INSTALLED_APPS = (\1',\n    'apps.{{ item.key }}'\n)"
+        replace: backup=yes  dest={{ settings_file }}  regexp="INSTALLED_APPS = \(((.|\n)*?)'\n\)"  replace="INSTALLED_APPS = (\1',\n    '{{ site_name }}.apps.{{ item.key }}'\n)"
         with_dict: "{{ Apps }}"
 
       when: Apps is defined
