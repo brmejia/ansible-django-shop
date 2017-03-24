@@ -1,0 +1,40 @@
+---
+
+- name: Deployment de una aplicación de DjangoShop
+  hosts: all
+  connection: local
+
+  vars:
+    root: '{{ playbook_dir | dirname }}'
+    venv: '{{ root }}/venv'
+    dir: '{{ root }}/src2'
+    site_name: 'testshop'
+    shop_name: 'myshop'
+
+  tasks:
+
+    - name: Crear directorios del proyecto
+      file: path={{ item }} state=absent
+      with_items:
+        - "{{ dir }}"
+
+    - name: Crear directorios del proyecto
+      file: path={{ item }} state=directory
+      with_items:
+        - "{{ dir }}"
+        - "{{ venv }}"
+
+    # Suponemos que el virtualenv ya está creado
+    - name: Copiando el wrapper para python en el virtualenv
+      template: src=templates/venv_exec.j2 dest={{ venv }}/exec mode=755
+
+    - name: Copiando el archivo de configuración de DjangoCMS
+      template: src=templates/djangocms.j2 dest={{ dir }}/djangocms.conf mode=755
+
+    - name: Crear el projecto de DjangoCMS
+      command: "{{ venv }}/exec djangocms --config-file djangocms.conf {{ site_name }}"
+      args:
+        chdir: "{{ dir }}"
+
+    # @todo: Crear superusuario
+    # ./manage.py createsuperuser --username admin --email ""

@@ -1,0 +1,62 @@
+[djangocms_installer]
+; Basic options
+parent-dir = {{ dir }}
+db = sqlite://localhost/{{ site_name }}.db
+; Django version; choices: 1.4|1.5|1.6|1.9|stable, default: stable
+django-version = 1.9
+;  django CMS version, choices: 2.4|3.0|3.1|stable|develop. default: stable
+cms-version = 3.4
+; Use Twitter Bootstrap as theme, choices: yes|no, default: no
+i18n = yes
+; Django timezone support; choices: yes|no, default: yes
+use-tz = no
+; Optional default time zone, default: local timezone
+timezone =
+; Install and configure reversion support, choices: yes|no, default: yes
+reversion = no
+; Activate CMS permission management; choices: yes|no, default: yes
+permissions = no
+; Languages available for the project.
+; Option can be provided multiple times, or as a comma separated list
+languages = en
+; Use bootstrap CSS framework; choices: yes|no, default: yes
+bootstrap = yes
+; Load a starting page with examples (english only) after installation,
+; choices: yes|no, default: no
+starting-page = no
+
+; Advanced options
+wizard = false
+verbose = false
+; If given djangocms installer run in Batch mode;
+no-input = false
+; Install and configure django-filer plugins;
+filer = true
+; You can use a custom requirements files instead of the requirements provided by
+; djangocms installer
+requirements =
+; Don’t install package dependencies
+no-deps = false
+; Don’t install database package
+no-db-driver = false
+; Don’t run syncdb / migrate after bootstrapping the project;
+no-sync = false
+; Don’t create the admin user
+no-user = false
+; Skip the check if the project dir contains files or directory
+skip-empty-check = true
+; Use UTC as default timezone
+utc = false
+; List plugins that’s going to be installed and configured for the project
+list-plugins = false
+; Dumps the generated requirements to stdout and exits
+dump-requirements = false
+; Path to a file with extra variables to append to generated settings file. It doesn’t need
+; to be a Python file, its content is blindly copied in the project settings.
+extra-settings =
+; Delete project dir if installation fails
+delete-project-dir = false
+no-plugins = false
+template =
+templates = no
+pip-options =
