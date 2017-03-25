@@ -11,7 +11,7 @@
     settings_file: "{{ src_dir }}/{{ site_name }}/settings.py"
     apps_dir: '{{ settings_file | dirname }}/apps'
     requirements:
-      base: "{{ root }}/requirements/base.txt"
+      devel: "{{ root }}/requirements/devel.txt"
       test: "{{ root }}/requirements/test.txt"
     Apps:
       hmt_shop:
@@ -22,9 +22,6 @@
         force_pull: no
 
   tasks:
-    # - block:
-
-    #   tags: test
 
     # VENV
     - block:
@@ -37,7 +34,7 @@
 
       - name: Instalación de los requisitos del proyecto
         pip:
-          requirements: "{{ requirements.base }}"
+          requirements: "{{ requirements.devel }}"
           state: present
           virtualenv: "{{ansible_env.VIRTUAL_ENV}}"
 
