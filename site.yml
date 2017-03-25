@@ -1,16 +1,18 @@
 ---
 
-- name: Deployment de una aplicación de DjangoShop
+- name: Instalación de una aplicación de DjangoCMS
   hosts: all
   connection: local
 
   vars:
     site_name: 'hmt_cms'
     root: '{{ playbook_dir | dirname }}'
-    venv: '{{ root }}/venv'
-    dir: '{{ root }}/src'
-    settings_file: "{{ dir }}/{{ site_name }}/settings.py"
+    src_dir: '{{ root }}/src'
+    settings_file: "{{ src_dir }}/{{ site_name }}/settings.py"
     apps_dir: '{{ settings_file | dirname }}/apps'
+    requirements:
+      base: "{{ root }}/requirements/base.txt"
+      test: "{{ root }}/requirements/test.txt"
     Apps:
       hmt_shop:
         repo:
@@ -20,34 +22,42 @@
         force_pull: no
 
   tasks:
-    - name: Eliminar el directorio existente
-      file: path={{ item }} state=absent
-      with_items:
-        - "{{ dir }}"
 
-    - name: Crear directorios del proyecto
-      file: path={{ item }} state=directory
-      with_items:
-        - "{{ venv }}"
-        - "{{ dir }}"
+    # VENV
+    - block:
+      # ANSIBLE utilizará el VIRTUAL_ENV activo
+      - name: Instalación de djangocms-installer
+        pip: name=djangocms-installer state=present
 
-    # Suponemos que el virtualenv ya está creado
-    - name: Copiando el wrapper para python en el virtualenv
-      template: src=templates/venv_exec.j2 dest={{ venv }}/exec mode=755
+      - name: Instalación de los requisitos del proyecto
+        pip: requirements={{ requirements.base }}  state=present
+      tags: venv
 
-    - name: Copiando el archivo de configuración de DjangoCMS
-      template: src=templates/djangocms.j2 dest={{ dir }}/djangocms.conf mode=755
+    # REPO
+    - block:
+      - name: Eliminar el directorio src existente
+        file: path={{ src_dir }} state=absent
+        tags: repo
 
-    - name: Crear el projecto de DjangoCMS
-      command: "{{ venv }}/exec djangocms --config-file djangocms.conf {{ site_name }}"
-      args:
-        chdir: "{{ dir }}"
+      - name: Crear directorios del proyecto
+        file: path={{ src_dir }} state=directory
+        tags: repo
+
+      - name: Copiando el archivo de configuración de DjangoCMS
+        template: src=templates/djangocms.j2 dest={{ src_dir }}/djangocms.conf mode=755
+
+      - name: Crear el projecto de DjangoCMS
+        command: "djangocms --config-file djangocms.conf {{ site_name }}"
+        args:
+          chdir: "{{ src_dir }}"
+
+      tags: cms
 
     # - name: Sobrescribiendo el archivo de configuración de Django-CMS
-    #   template: src=templates/djangocms_settings.py dest={{ dir }}/{{ site_name }}/settings.py mode=755
+    #   template: src=templates/djangocms_settings.py dest={{ src_dir }}/{{ site_name }}/settings.py mode=755
 
+    # APPS
     - block:
-
       - name: Crear directorio de apps
         file: path={{ apps_dir }} state=directory
 
@@ -67,17 +77,19 @@
         with_dict: "{{ Apps }}"
 
       when: Apps is defined
-
+      tags: apps
 
     - name: Actualizar migraciones de la base de datos
-      command: "{{ venv }}/exec ./manage.py makemigrations"
+      command: "./manage.py makemigrations"
       args:
-        chdir: "{{ dir }}"
+        chdir: "{{ src_dir }}"
+      tags: db
 
     - name: Aplicar cambios en la base de datos
-      command: "{{ venv }}/exec ./manage.py migrate"
+      command: "./manage.py migrate"
       args:
-        chdir: "{{ dir }}"
+        chdir: "{{ src_dir }}"
+      tags: db
 
     # @todo: Crear superusuario
     # ./manage.py createsuperuser --username admin --email ""
