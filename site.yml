@@ -22,15 +22,25 @@
         force_pull: no
 
   tasks:
+    # - block:
+
+    #   tags: test
 
     # VENV
     - block:
       # ANSIBLE utilizará el VIRTUAL_ENV activo
       - name: Instalación de djangocms-installer
-        pip: name=djangocms-installer state=present
+        pip:
+          name: djangocms-installer
+          state: present
+          virtualenv: "{{ansible_env.VIRTUAL_ENV}}"
 
       - name: Instalación de los requisitos del proyecto
-        pip: requirements={{ requirements.base }}  state=present
+        pip:
+          requirements: "{{ requirements.base }}"
+          state: present
+          virtualenv: "{{ansible_env.VIRTUAL_ENV}}"
+
       tags: venv
 
     # REPO
