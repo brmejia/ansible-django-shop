@@ -53,13 +53,15 @@
 
       tags: cms
 
-    # - name: Sobrescribiendo el archivo de configuración de Django-CMS
-    #   template: src=templates/djangocms_settings.py dest={{ src_dir }}/{{ site_name }}/settings.py mode=755
+    # TODO: Sobrescribiendo el archivo de configuración de Django-CMS
+    # template: src=templates/djangocms_settings.py dest={{ src_dir }}/{{ site_name }}/settings.py mode=755
 
     # APPS
     - block:
       - name: Crear directorio de apps
         file: path={{ apps_dir }} state=directory
+      - name: añadir archivo __init__.py al directorio apps
+        file: path={{ apps_dir }}/__init__.py state=touch
 
       # First, you have to add the ssh key to the repository service (e.g. github)
       - name: Haciendo pull del código de las aplicaciones
@@ -75,21 +77,23 @@
       - name: Añadir aplicaciones al settings.py de Django
         replace: backup=yes  dest={{ settings_file }}  regexp="INSTALLED_APPS = \(((.|\n)*?)'\n\)"  replace="INSTALLED_APPS = (\1',\n    '{{ site_name }}.apps.{{ item.key }}'\n)"
         with_dict: "{{ Apps }}"
+        notify:
+          - makemigrations
+          - migrate
 
       when: Apps is defined
       tags: apps
 
-    - name: Actualizar migraciones de la base de datos
+  handlers:
+    - name: makemigrations
       command: "./manage.py makemigrations"
       args:
         chdir: "{{ src_dir }}"
-      tags: db
 
-    - name: Aplicar cambios en la base de datos
+    - name: migrate
       command: "./manage.py migrate"
       args:
         chdir: "{{ src_dir }}"
-      tags: db
 
     # @todo: Crear superusuario
     # ./manage.py createsuperuser --username admin --email ""
